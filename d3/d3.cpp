@@ -1,15 +1,38 @@
 // d3.cpp : Defines the entry point for the console application.
 
 #include "stdafx.h"
-#include "UDPSocket.h"
+#include "d3.h"
 
-#pragma comment(lib, "Ws2_32.lib")
+void listenUDP(UDPSocket s) {
+	while (true) {
+		char buffer[100];
+		memset(buffer, 0, sizeof(buffer));
 
-#define PROTOCOL1 7106
-#define PROTOCOL2 7104
+		s.recieveData(buffer, 100);
+		std::cout << buffer << "\n";
+		
+	}
+}
 
 int main() {
 
+	winsockSetUp();
+
+	UDPSocket protocol1("Protocol 1", PROTOCOL1);
+	UDPSocket protocol2("Protocol 2", PROTOCOL2);
+
+	std::thread p1 (listenUDP, protocol1);
+	std::thread p2 (listenUDP, protocol2);
+
+	p1.join();
+	p2.join();
+
+	// Cleanup
+	WSACleanup();
+    return 0;
+}
+
+void winsockSetUp() {
 	// Set up winsock
 	WSADATA wsa;
 	printf("Initialising Winsock...\n");
@@ -19,21 +42,6 @@ int main() {
 		exit(EXIT_FAILURE);
 	}
 	printf("Initialised.\n");
-
-
-	UDPSocket protocol1("Protocol 1", PROTOCOL1);
-	UDPSocket protocol2("Protocol 2", PROTOCOL2);
-	char buffer[100];
-	protocol1.recieveData(buffer, 20);
-	printf(buffer);
-	printf("\n");
-	protocol2.recieveData(buffer, 20);
-	printf(buffer);
-	printf("\n");
-
-	// Cleanup
-	WSACleanup();
-    return 0;
 }
 
 

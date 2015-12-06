@@ -1,13 +1,12 @@
 #include "stdafx.h"
 #include "UDPSocket.h"
 
-
 UDPSocket::UDPSocket(std::string name, u_short port) {
 
 	// Create a socket
 	sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
 	if (sock == INVALID_SOCKET) {
-		printf("Cannot create socket. Error code: %d\n", WSAGetLastError());
+		std::cout << "Cannot create socket " << name << ". Error code: " << WSAGetLastError() << "\n";
 		exit(EXIT_FAILURE);
 	}
 	std::cout << name << " socket created.\n";
@@ -22,9 +21,10 @@ UDPSocket::UDPSocket(std::string name, u_short port) {
 
 	// Bind port to socket
 	if (bind(sock, (struct sockaddr *) &sock_addr, sizeof(sock_addr)) == SOCKET_ERROR) {
-		printf("Bind Failed. Error code: %d\n", WSAGetLastError());
+		std::cout << name << " bind failed. Error code: " << WSAGetLastError() << "\n";
 		exit(EXIT_FAILURE);
 	}
+	std::cout << name << " binded to port: " << port << "\n";
 
 }
 
