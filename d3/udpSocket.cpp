@@ -33,6 +33,6 @@ UDPSocket::~UDPSocket() {
 }
 
 void UDPSocket::recieveData(char* buffer, int size, int flags) {
-	// Wait to receive a message
+	// Wait to receive a message and output it into buffer
 	recv(sock, buffer, size, flags);
 }
