@@ -22,6 +22,7 @@ void Session::printSession() {
 	std::cout << "\n\n";
 }
 
+
 Session::~Session()
 {
 }
