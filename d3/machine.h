@@ -4,7 +4,7 @@
 #ifndef MACHINE
 #define MACHINE
 
-#define TIMEOUT 5
+#define TIMEOUT 3
 #define FPS_NO 3
 
 enum class Status {ACTIVE, CONNECTED, LOST, NOT_CONNECTED};

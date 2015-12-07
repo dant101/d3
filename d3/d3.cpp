@@ -4,8 +4,8 @@
  * General Workflow of d3
  * 
  * SESSION2 is called creating a session of unconnected machines, sessions with the same name are overridden
- * MACHINE is called which attempts to connect to a session, machines with the same name are overriden
- * MACHINESTATUS is called which updates the machine in each of it's sessions it's connected to
+ * MACHINE is called which attempts to connect to it's relevant session, machines with the same name are overriden
+ * MACHINESTATUS is called which updates all relevant machines in each session with fps and version info
  * 
  * Every TIME_UPDATE, all sessions are printed to console
  * If a machine doesn't communicate for TIMEOUT seconds, assume it's connection has been lost
@@ -34,13 +34,34 @@ int main() {
 	std::thread p1 (listenUDP, protocol1);
 	std::thread p2 (listenUDP, protocol2);
 
+	// Print out sessions every TIME_UPDATE
+	std::thread updater(consoleUpdate);
+
 	// Wait for threads to finish listening
 	p1.join();
 	p2.join();
+	updater.join();
 
 	// Cleanup
 	WSACleanup();
     return 0;
+}
+
+void consoleUpdate() {
+	while (true) {
+
+		sessionLock.lock();
+
+		// Loop through sessions
+		for (std::vector<Session>::iterator sess_it = sessions->begin(); sess_it < sessions->end(); sess_it++) {
+			(*sess_it).printSession();
+		}
+
+		sessionLock.unlock();
+
+		// Sleep current thread
+		std::this_thread::sleep_for(std::chrono::seconds(TIME_UPDATE));
+	}
 }
 
 void listenUDP(UDPSocket s) {
@@ -56,6 +77,8 @@ void listenUDP(UDPSocket s) {
 		parse(buffer, '|', v, sizeof(buffer));
 
 		// Call relevent methods
+		// Lock to ensure mutex when editing the sessions vector
+		sessionLock.lock();
 		switch (enumHash(*(v->begin()))) {
 		case MessageType::SESSION_STARTUP:
 			sessionStartup(v);
@@ -69,11 +92,11 @@ void listenUDP(UDPSocket s) {
 		default:
 			break;
 		}
+		sessionLock.unlock();
 	}
 }
 
 void machineStatus(std::vector<std::string> *v) {
-	sessionLock.lock();
 
 	if (v->size() != 4) {
 		// Error - somethings missing or there's something extra
@@ -99,17 +122,9 @@ void machineStatus(std::vector<std::string> *v) {
 			}
 		}
 	}
-
-	std::cout << "Machine heartbeat " << machine_id << version << fps << "\n";
-	for (std::vector<Session>::iterator it = sessions->begin(); it < sessions->end(); it++) {
-		(*it).printSession();
-	}
-
-	sessionLock.unlock();
 }
 
 void machineStartup(std::vector<std::string> *v) {
-	sessionLock.lock();
 
 	if (v->size() != 3) {
 		// Error - somethings missing or there's something extra
@@ -135,17 +150,9 @@ void machineStartup(std::vector<std::string> *v) {
 			}
 		}
 	}
-
-	std::cout << "Machine startup " << v->at(1) << v->at(2) << "\n";
-	for (std::vector<Session>::iterator it = sessions->begin(); it < sessions->end(); it++) {
-		(*it).printSession();
-	}
-
-	sessionLock.unlock();
 }
 
 void sessionStartup(std::vector<std::string> *v) {
-	sessionLock.lock();
 
 	if (v->size() < 3) {
 		// Error - Session needs at least a name and creator
@@ -165,12 +172,6 @@ void sessionStartup(std::vector<std::string> *v) {
 
 	insertSession(session);
 
-	std::cout << "Session startup " << v->at(1) << v->at(2) << "\n";
-	for (std::vector<Session>::iterator it = sessions->begin(); it < sessions->end(); it++) {
-		(*it).printSession();
-	}
-
-	sessionLock.unlock();
 }
 
 // Insert a new session or replace one that already exist
@@ -180,7 +181,6 @@ void insertSession(Session *s) {
 		// If names match, replace
 		if ((*it).session_name.compare(s->session_name) == 0) {
 			(*it) = *s;
-			sessionLock.unlock();
 			return;
 		}
 	}
