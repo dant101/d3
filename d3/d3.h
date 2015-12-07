@@ -30,5 +30,6 @@ MessageType enumHash(std::string str);
 
 void sessionStartup(std::vector<std::string> *v);
 void insertSession(Session *s);
+void machineStartup(std::vector<std::string> *v);
 
 #endif

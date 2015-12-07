@@ -61,7 +61,7 @@ void listenUDP(UDPSocket s) {
 			sessionStartup(v);
 			break;
 		case MessageType::MACHINE_STARTUP:
-			
+			machineStartup(v);
 			break;
 		case MessageType::MACHINESTATUS:
 			
@@ -70,6 +70,39 @@ void listenUDP(UDPSocket s) {
 			break;
 		}
 	}
+}
+
+void machineStartup(std::vector<std::string> *v) {
+	sessionLock.lock();
+
+	if (v->size() != 3) {
+		// Error - somethings missing or there's something extra
+		return;
+	}
+
+	// Loop through sessions
+	for (std::vector<Session>::iterator sess_it = sessions->begin(); sess_it < sessions->end(); sess_it++) {
+
+		// Check which sessions the machine matches
+		if ((*sess_it).session_name.compare(v->at(2)) == 0) {
+
+			// Loop through that sessions machines
+			for (std::vector<Machine>::iterator machine_it = (*sess_it).machines.begin(); machine_it < (*sess_it).machines.end(); machine_it++) {
+
+				// Compare machine names
+				if ((*machine_it).machine_id.compare(v->at(1)) == 0) {
+					(*machine_it) = *(new Machine(v->at(1), Status::CONNECTED));
+				}
+			}
+		}
+	}
+
+	std::cout << "Machine startup " << v->at(1) << v->at(2) << "\n";
+	for (std::vector<Session>::iterator it = sessions->begin(); it < sessions->end(); it++) {
+		(*it).printSession();
+	}
+
+	sessionLock.unlock();
 }
 
 void sessionStartup(std::vector<std::string> *v) {
@@ -91,6 +124,11 @@ void sessionStartup(std::vector<std::string> *v) {
 	}
 
 	insertSession(session);
+
+	std::cout << "Session startup " << v->at(1) << v->at(2) << "\n";
+	for (std::vector<Session>::iterator it = sessions->begin(); it < sessions->end(); it++) {
+		(*it).printSession();
+	}
 }
 
 // Insert a new session or replace one that already exist
@@ -106,6 +144,7 @@ void insertSession(Session *s) {
 		}
 	}
 
+	// Else no matches, so just add a new session
 	sessions->push_back(*s);
 	sessionLock.unlock();
 }

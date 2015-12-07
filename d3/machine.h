@@ -10,10 +10,11 @@ class Machine
 {
 public:
 	Machine(std::string machine_id_);
+	Machine(std::string machine_id_, Status status_) : machine_id(machine_id_), status(status_) {};
 	~Machine();
 
 	void printMachine();
-private:
+
 	std::string machine_id;
 	Status status;
 

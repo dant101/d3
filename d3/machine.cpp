@@ -8,6 +8,7 @@ Machine::Machine(std::string machine_id_) : machine_id(machine_id_)
 }
 
 
+
 Machine::~Machine()
 {
 }
@@ -18,7 +19,9 @@ void Machine::printMachine() {
 	case Status::NOT_CONNECTED:
 			std::cout << "| Machine ID: " << machine_id << " | Status: Not connected |\n";
 			break;
-
+	case Status::CONNECTED:
+			std::cout << "| Machine ID: " << machine_id << " | Status: Connected |\n";
+			break;
 	default:
 		break;
 	}
