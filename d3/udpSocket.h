@@ -13,7 +13,7 @@ private:
 
 public:
 	UDPSocket(std::string name, u_short port);
-	~UDPSocket();
+	virtual ~UDPSocket();
 
 	void recieveData(char* buffer, int size, int flags = 0);
 };

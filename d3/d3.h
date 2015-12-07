@@ -1,5 +1,6 @@
 #include "udpSocket.h"
 #include "parser.h"
+#include "session.h"
 #include <string>
 #include <thread>
 #include <vector>

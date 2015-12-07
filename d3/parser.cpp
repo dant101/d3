@@ -15,7 +15,7 @@ void parse(char* chars, char delim, std::vector<std::string> *v, int size) {
 			s += chars[i];
 		}
 	}
-	v->push_back(s);
+	v->push_back(chop(s));
 
 }
 
@@ -23,7 +23,7 @@ void parse(char* chars, char delim, std::vector<std::string> *v, int size) {
 std::string chop(std::string str) {
 	int i = str.length() - 1;
 	for (i; i >= 0; i--) {
-		if (str[i] != ' ') {
+		if (str[i] != ' ' && str[i] != '\0') {
 			i++;
 			break;
 		}

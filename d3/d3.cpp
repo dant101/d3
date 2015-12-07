@@ -7,14 +7,17 @@
 
 int main() {
 
-	char buffer[100] = "SESSION2|my session|paulspc|peterspc     |davespc      ";
+	char buffer[100] = "paulspc|peterspc             |davespc      ";
 
 	std::vector<std::string> v;
 	parse(buffer, '|', &v, sizeof(buffer));
 
-	for (std::vector<std::string>::iterator it = v.begin(); it != v.end(); it++) {
-		std::cout << *it << "\n";
-	}
+
+	std::string s1 = "my session";
+	std::string s2 = "paulspc";
+	Session s(s1, s2, v);
+
+	s.printSession();
 
 
 
