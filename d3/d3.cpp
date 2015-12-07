@@ -3,8 +3,8 @@
 /* 
  * General Workflow of d3
  * 
- * SESSION2 is called creating a session of unconnected machines
- * MACHINE is called which attempts to connect to a session
+ * SESSION2 is called creating a session of unconnected machines, sessions with the same name are overridden
+ * MACHINE is called which attempts to connect to a session, machines with the same name are overriden
  * MACHINESTATUS is called which updates the machine in each of it's sessions it's connected to
  * 
  * Every TIME_UPDATE, all sessions are printed to console
@@ -47,9 +47,9 @@ void listenUDP(UDPSocket s) {
 	while (true) {
 
 		// Read message
-		char buffer[100];
+		char buffer[MAX_MESSAGE_LENGTH];
 		memset(buffer, 0, sizeof(buffer));
-		s.recieveData(buffer, 100);
+		s.recieveData(buffer, MAX_MESSAGE_LENGTH);
 
 		// Parse message
 		std::vector<std::string> *v = new std::vector<std::string>();
@@ -64,12 +64,48 @@ void listenUDP(UDPSocket s) {
 			machineStartup(v);
 			break;
 		case MessageType::MACHINESTATUS:
-			
+			machineStatus(v);
 			break;
 		default:
 			break;
 		}
 	}
+}
+
+void machineStatus(std::vector<std::string> *v) {
+	sessionLock.lock();
+
+	if (v->size() != 4) {
+		// Error - somethings missing or there's something extra
+		return;
+	}
+
+	std::string machine_id = v->at(1);
+	std::string version = v->at(2);
+	std::string fps = v->at(3);
+
+	// Loop through sessions
+	for (std::vector<Session>::iterator sess_it = sessions->begin(); sess_it < sessions->end(); sess_it++) {
+
+		// Loop through that sessions machines
+		for (std::vector<Machine>::iterator machine_it = (*sess_it).machines.begin(); machine_it < (*sess_it).machines.end(); machine_it++) {
+
+			// Compare machine names
+			if ((*machine_it).machine_id.compare(machine_id) == 0) {
+
+				// If machines connected - heartbeat
+				if ((*machine_it).status != Status::NOT_CONNECTED)
+					(*machine_it).heartBeat(version, fps);
+			}
+		}
+	}
+
+	std::cout << "Machine heartbeat " << machine_id << version << fps << "\n";
+	for (std::vector<Session>::iterator it = sessions->begin(); it < sessions->end(); it++) {
+		(*it).printSession();
+	}
+
+	sessionLock.unlock();
 }
 
 void machineStartup(std::vector<std::string> *v) {
@@ -80,18 +116,21 @@ void machineStartup(std::vector<std::string> *v) {
 		return;
 	}
 
+	std::string machine_id = v->at(1);
+	std::string session_name = v->at(2);
+
 	// Loop through sessions
 	for (std::vector<Session>::iterator sess_it = sessions->begin(); sess_it < sessions->end(); sess_it++) {
 
 		// Check which sessions the machine matches
-		if ((*sess_it).session_name.compare(v->at(2)) == 0) {
+		if ((*sess_it).session_name.compare(session_name) == 0) {
 
 			// Loop through that sessions machines
 			for (std::vector<Machine>::iterator machine_it = (*sess_it).machines.begin(); machine_it < (*sess_it).machines.end(); machine_it++) {
 
 				// Compare machine names
-				if ((*machine_it).machine_id.compare(v->at(1)) == 0) {
-					(*machine_it) = *(new Machine(v->at(1), Status::CONNECTED));
+				if ((*machine_it).machine_id.compare(machine_id) == 0) {
+					(*machine_it) = *(new Machine(machine_id, Status::CONNECTED));
 				}
 			}
 		}
@@ -106,6 +145,7 @@ void machineStartup(std::vector<std::string> *v) {
 }
 
 void sessionStartup(std::vector<std::string> *v) {
+	sessionLock.lock();
 
 	if (v->size() < 3) {
 		// Error - Session needs at least a name and creator
@@ -129,11 +169,12 @@ void sessionStartup(std::vector<std::string> *v) {
 	for (std::vector<Session>::iterator it = sessions->begin(); it < sessions->end(); it++) {
 		(*it).printSession();
 	}
+
+	sessionLock.unlock();
 }
 
 // Insert a new session or replace one that already exist
 void insertSession(Session *s) {
-	sessionLock.lock();
 
 	for (std::vector<Session>::iterator it = sessions->begin(); it < sessions->end(); it++) {
 		// If names match, replace
@@ -146,7 +187,7 @@ void insertSession(Session *s) {
 
 	// Else no matches, so just add a new session
 	sessions->push_back(*s);
-	sessionLock.unlock();
+
 }
 
 // For switching on a string
