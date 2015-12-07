@@ -82,7 +82,7 @@ void Machine::update() {
 
 	// Get time since last update
 	std::chrono::duration<double> elapsed_seconds = std::chrono::system_clock::now() - last_access;
-	std::cout << elapsed_seconds.count() << "s\n";
+
 	if (status == Status::ACTIVE && elapsed_seconds.count() > TIMEOUT) {
 		status = Status::LOST;
 		fps_count = 0;

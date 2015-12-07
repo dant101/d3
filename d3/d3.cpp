@@ -30,17 +30,24 @@ int main() {
 	UDPSocket protocol1("Protocol 1", PROTOCOL1);
 	UDPSocket protocol2("Protocol 2", PROTOCOL2);
 
-	// Listen for UDP's and deal with the inputs
-	std::thread p1 (listenUDP, protocol1);
-	std::thread p2 (listenUDP, protocol2);
+	try {
+		// Listen for UDP's and deal with the inputs
+		std::thread p1(listenUDP, protocol1);
+		std::thread p2(listenUDP, protocol2);
 
-	// Print out sessions every TIME_UPDATE
-	std::thread updater(consoleUpdate);
+		// Print out sessions every TIME_UPDATE
+		std::thread updater(consoleUpdate);
 
-	// Wait for threads to finish listening
-	p1.join();
-	p2.join();
-	updater.join();
+		// Wait for threads to finish listening
+		p1.join();
+		p2.join();
+		updater.join();
+	}
+	catch (const std::system_error& e) {
+		// Thread error
+		std::cout << "Caught system_error with code " << e.code()
+			<< " meaning " << e.what() << '\n';
+	}
 
 	// Cleanup
 	WSACleanup();
