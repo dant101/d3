@@ -4,6 +4,7 @@
 void Machine::init() {
 	fps_count = 0;
 	fps_last = 0;
+	last_access = std::chrono::system_clock::now();
 }
 
 Machine::Machine(std::string machine_id_) : machine_id(machine_id_)
@@ -23,6 +24,8 @@ Machine::~Machine()
 }
 
 void Machine::printMachine() {
+	update();
+
 	switch (status)
 	{
 	case Status::NOT_CONNECTED:
@@ -34,6 +37,11 @@ void Machine::printMachine() {
 	case Status::ACTIVE:
 		std::cout << "| Machine ID: " << machine_id << " | Status: Active | Version: " << version << " | Average FPS: " << averageFPS() << " |\n";
 		break;
+	case Status::LOST:
+		std::chrono::duration<double> elapsed_seconds = std::chrono::system_clock::now() - last_access;
+		std::cout << "| Machine ID: " << machine_id << " | Status: LOST | Version: " << version << " | Last Transmission: ";
+		std::cout << elapsed_seconds.count() << "s |\n";
+		break;
 	default:
 		break;
 	}
@@ -43,7 +51,8 @@ void Machine::printMachine() {
 void Machine::heartBeat(std::string version_, std::string fps_) {
 	status = Status::ACTIVE;
 	version = version_;
-
+	last_access = std::chrono::system_clock::now();
+	
 	int current_fps = atoi(fps_.c_str());
 
 	if (fps_count < FPS_NO) {
@@ -67,4 +76,16 @@ int Machine::averageFPS() {
 	}
 	double avg = total / (double)fps_count;
 	return (int) avg;
+}
+
+void Machine::update() {
+
+	// Get time since last update
+	std::chrono::duration<double> elapsed_seconds = std::chrono::system_clock::now() - last_access;
+	std::cout << elapsed_seconds.count() << "s\n";
+	if (status == Status::ACTIVE && elapsed_seconds.count() > TIMEOUT) {
+		status = Status::LOST;
+		fps_count = 0;
+		fps_last = 0;
+	}
 }

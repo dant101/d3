@@ -4,13 +4,14 @@
 
 Session::Session(std::string session_name_, std::string creator_, std::vector<std::string> machine_ids) : session_name(session_name_), creator(creator_)
 {
-
+	// Create machines and push them into a vector
 	for (std::vector<std::string>::iterator it = machine_ids.begin(); it != machine_ids.end(); it++) {
 		machines.push_back(Machine(*it));
 	}
 
 }
 
+// Session print layout
 void Session::printSession() {
 	std::cout << "\n\n";
 	std::cout << "| Session: " << session_name << " | Creator: " << creator + " |\n";

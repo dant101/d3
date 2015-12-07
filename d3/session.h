@@ -10,7 +10,6 @@ class Session
 {
 public:
 	
-
 	Session(std::string session_name, std::string creator, std::vector<std::string> machine_ids);
 	virtual ~Session();
 

@@ -1,11 +1,12 @@
 #include <string>
 #include <iostream>
+#include <chrono>
 
 #ifndef MACHINE
 #define MACHINE
 
-#define TIMEOUT 3
-#define FPS_NO 3
+#define TIMEOUT 2.5
+#define FPS_NO 10
 
 enum class Status {ACTIVE, CONNECTED, LOST, NOT_CONNECTED};
 
@@ -20,6 +21,7 @@ public:
 	void printMachine();
 	void heartBeat(std::string version, std::string fps);
 	int averageFPS();
+	void update();
 
 	std::string machine_id;
 	Status status;
@@ -29,6 +31,8 @@ private:
 	int fps[FPS_NO];
 	int fps_count;
 	int fps_last;
+	std::chrono::time_point<std::chrono::system_clock> last_access;
+
 
 };
 
